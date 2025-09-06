@@ -30,19 +30,20 @@ A sophisticated Flutter application showcasing modern development practices with
 ## Architecture
 
 lib/
-├── core/ # Core app utilities
-│ ├── config/ # App configuration and constants
-│ └── theme/ # Theme definitions and styling
-├── data/ # Data layer
-│ ├── datasources/
-│ │ ├── local/ # Hive database implementation
-│ │ └── remote/ # API client and services
-│ ├── models/ # Data models (with code generation)
-│ └── repositories/ # Repository pattern implementation
-└── presentation/ # UI layer
-├── providers/ # Riverpod state management
-├── screens/ # Main app screens
-└── widgets/ # Reusable UI components
+- core/                 # Core app utilities
+  - config/            # App configuration and constants
+  - theme/             # Theme definitions and styling
+- data/                # Data layer
+  - datasources/
+    - local/           # Hive database implementation
+    - remote/          # API client and services
+  - models/            # Data models (with code generation)
+  - repositories/      # Repository pattern implementation
+- presentation/        # UI layer
+  - providers/         # Riverpod state management
+  - screens/           # Main app screens
+  - widgets/           # Reusable UI components
+
 
 >Prerequisites
 
