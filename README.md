@@ -159,4 +159,4 @@ This project is available for evaluation purposes.
 
 ---
 
-**Developed with expertise in Flutter architecture, demonstrating production-ready code quality and best practices.**
+**Developed by Vishal - Demonstrating production-ready Flutter architecture and best practices.**
