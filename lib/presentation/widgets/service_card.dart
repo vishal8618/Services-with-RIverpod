@@ -80,7 +80,7 @@ class _ServiceCardState extends ConsumerState<ServiceCard>
     
     return Card(
       clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: InkWell(
         onTap: widget.onTap,
         child: Column(
@@ -91,7 +91,7 @@ class _ServiceCardState extends ConsumerState<ServiceCard>
                 Hero(
                   tag: 'service_image_${widget.service.id}',
                   child: Container(
-                    height: 180,
+                    height: 120,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceVariant,
@@ -173,7 +173,7 @@ class _ServiceCardState extends ConsumerState<ServiceCard>
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -207,14 +207,14 @@ class _ServiceCardState extends ConsumerState<ServiceCard>
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     widget.service.description,
-                    style: theme.textTheme.bodyMedium,
-                    maxLines: 2,
+                    style: theme.textTheme.bodySmall,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Icon(
@@ -257,7 +257,7 @@ class _ServiceCardState extends ConsumerState<ServiceCard>
                     ],
                   ),
                   if (widget.service.tags.isNotEmpty) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,

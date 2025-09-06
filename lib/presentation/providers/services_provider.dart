@@ -45,6 +45,38 @@ final favoriteServicesProvider = FutureProvider<List<ServiceModel>>(
   },
 );
 
+final filteredFavoriteServicesProvider = Provider<AsyncValue<List<ServiceModel>>>(
+  (ref) {
+    final favoritesAsync = ref.watch(favoriteServicesProvider);
+    final searchQuery = ref.watch(searchQueryProvider).toLowerCase().trim();
+    
+    return favoritesAsync.when(
+      data: (favorites) {
+        if (searchQuery.isEmpty) {
+          return AsyncValue.data(favorites);
+        }
+        
+        final queryWords = searchQuery.split(' ').where((word) => word.isNotEmpty).toList();
+        
+        final filtered = favorites.where((service) {
+          final name = service.name.toLowerCase();
+          final description = service.description.toLowerCase();
+          final category = service.category.toLowerCase();
+          final tags = service.tags.map((tag) => tag.toLowerCase()).toList();
+          final searchText = '$name $description $category ${tags.join(' ')}';
+          
+          // Match if all query words are found in the combined text
+          return queryWords.every((word) => searchText.contains(word));
+        }).toList();
+        
+        return AsyncValue.data(filtered);
+      },
+      loading: () => const AsyncValue.loading(),
+      error: (error, stack) => AsyncValue.error(error, stack),
+    );
+  },
+);
+
 final favoriteIdsStreamProvider = StreamProvider<List<String>>(
   (ref) {
     final repository = ref.watch(servicesRepositoryProvider);
@@ -107,7 +139,7 @@ class ServicesNotifier extends StateNotifier<AsyncValue<List<ServiceModel>>> {
 
   ServicesNotifier(this.ref) : super(const AsyncValue.loading());
 
-  Future<void> loadInitial({String? category, String? searchQuery}) async {
+  Future<void> loadInitial({String? category, String? searchQuery, bool forceRefresh = false}) async {
     _currentPage = 1;
     _hasMore = true;
     _currentCategory = category;
@@ -122,6 +154,7 @@ class ServicesNotifier extends StateNotifier<AsyncValue<List<ServiceModel>>> {
         page: _currentPage,
         category: _currentCategory,
         searchQuery: _currentSearchQuery,
+        forceRefresh: forceRefresh,
       );
       
       _allServices.addAll(services);
@@ -145,9 +178,11 @@ class ServicesNotifier extends StateNotifier<AsyncValue<List<ServiceModel>>> {
         searchQuery: _currentSearchQuery,
       );
       
-      if (services.isEmpty) {
+      if (services.isEmpty || services.length < 20) {
         _hasMore = false;
-      } else {
+      }
+      
+      if (services.isNotEmpty) {
         _allServices.addAll(services);
         state = AsyncValue.data(List.from(_allServices));
       }
@@ -158,6 +193,10 @@ class ServicesNotifier extends StateNotifier<AsyncValue<List<ServiceModel>>> {
   }
 
   Future<void> refresh() async {
+    // Clear cache to force fresh data
+    final repository = ref.read(servicesRepositoryProvider);
+    await repository.clearCache();
+    
     await loadInitial(
       category: _currentCategory,
       searchQuery: _currentSearchQuery,

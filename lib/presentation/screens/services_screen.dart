@@ -27,9 +27,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen>
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_handleTabChange);
     _scrollController.addListener(_handleScroll);
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(servicesNotifierProvider.notifier).loadInitial();
+      ref.read(servicesNotifierProvider.notifier).loadInitial(forceRefresh: true);
     });
   }
 
@@ -50,25 +50,25 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen>
   }
 
   void _handleScroll() {
-    if (_tabController.index == 0 && 
-        _scrollController.position.pixels >= 
-        _scrollController.position.maxScrollExtent - 200) {
+    if (_tabController.index == 0 &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
       _loadMore();
     }
   }
 
   Future<void> _loadMore() async {
     if (_isLoadingMore) return;
-    
+
     final notifier = ref.read(servicesNotifierProvider.notifier);
     if (!notifier.hasMore) return;
-    
+
     setState(() {
       _isLoadingMore = true;
     });
-    
+
     await notifier.loadMore();
-    
+
     if (mounted) {
       setState(() {
         _isLoadingMore = false;
@@ -78,9 +78,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen>
 
   Future<void> _handleSearch(String query) async {
     ref.read(searchQueryProvider.notifier).state = query;
-    await ref.read(servicesNotifierProvider.notifier).loadInitial(
-      searchQuery: query.isEmpty ? null : query,
-    );
+    await ref
+        .read(servicesNotifierProvider.notifier)
+        .loadInitial(searchQuery: query.isEmpty ? null : query);
   }
 
   void _navigateToDetail(ServiceModel service) {
@@ -95,89 +95,87 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
-    return Scaffold(
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              floating: true,
-              pinned: true,
-              expandedHeight: 140,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.secondary,
+
+    return SafeArea(
+      child: Scaffold(
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverAppBar(
+                floating: true,
+                pinned: true,
+                expandedHeight: 210,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.secondary,
+                        ],
+                      ),
+                    ),
+                  ),
+                  title: const Text(
+                    'Services Hub',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  centerTitle: false,
+                ),
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(210),
+                  child: Container(
+                    color: theme.colorScheme.surface,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              hintText: 'Search services...',
+                              prefixIcon: const Icon(Icons.search),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        _handleSearch('');
+                                      },
+                                    )
+                                  : null,
+                            ),
+                            onChanged: _handleSearch,
+                            onSubmitted: _handleSearch,
+                          ),
+                        ),
+                        TabBar(
+                          controller: _tabController,
+                          indicatorWeight: 3,
+                          tabs: const [
+                            Tab(
+                              text: 'All Services',
+                              icon: Icon(Icons.apps, size: 20),
+                            ),
+                            Tab(
+                              text: 'Favorites',
+                              icon: Icon(Icons.favorite, size: 20),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
                 ),
-                title: const Text(
-                  'Services Hub',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                centerTitle: false,
               ),
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(110),
-                child: Container(
-                  color: theme.colorScheme.surface,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Search services...',
-                            prefixIcon: const Icon(Icons.search),
-                            suffixIcon: _searchController.text.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      _handleSearch('');
-                                    },
-                                  )
-                                : null,
-                          ),
-                          onSubmitted: _handleSearch,
-                        ),
-                      ),
-                      TabBar(
-                        controller: _tabController,
-                        indicatorWeight: 3,
-                        tabs: const [
-                          Tab(
-                            text: 'All Services',
-                            icon: Icon(Icons.apps, size: 20),
-                          ),
-                          Tab(
-                            text: 'Favorites',
-                            icon: Icon(Icons.favorite, size: 20),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ];
-        },
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildAllServicesTab(),
-            _buildFavoritesTab(),
-          ],
+            ];
+          },
+          body: TabBarView(
+            controller: _tabController,
+            children: [_buildAllServicesTab(), _buildFavoritesTab()],
+          ),
         ),
       ),
     );
@@ -185,7 +183,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen>
 
   Widget _buildAllServicesTab() {
     final servicesState = ref.watch(servicesNotifierProvider);
-    
+
     return servicesState.when(
       data: (services) {
         if (services.isEmpty) {
@@ -195,7 +193,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen>
             subtitle: 'Try adjusting your search or check back later',
           );
         }
-        
+
         return RefreshIndicator(
           onRefresh: () async {
             await ref.read(servicesNotifierProvider.notifier).refresh();
@@ -205,27 +203,24 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen>
             cacheExtent: AppConfig.listItemCacheExtent,
             slivers: [
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    if (index < services.length) {
-                      final service = services[index];
-                      return ServiceCard(
-                        key: ValueKey(service.id),
-                        service: service,
-                        onTap: () => _navigateToDetail(service),
-                      );
-                    } else if (_isLoadingMore) {
-                      return const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      );
-                    }
-                    return null;
-                  },
-                  childCount: services.length + (_isLoadingMore ? 1 : 0),
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  if (index < services.length) {
+                    final service = services[index];
+                    return ServiceCard(
+                      key: ValueKey(service.id),
+                      service: service,
+                      onTap: () => _navigateToDetail(service),
+                    );
+                  } else if (_isLoadingMore) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    );
+                  }
+                  return null;
+                }, childCount: services.length + (_isLoadingMore ? 1 : 0)),
               ),
             ],
           ),
@@ -240,18 +235,26 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen>
   }
 
   Widget _buildFavoritesTab() {
-    final favoritesAsync = ref.watch(favoriteServicesProvider);
-    
+    final favoritesAsync = ref.watch(filteredFavoriteServicesProvider);
+
     return favoritesAsync.when(
       data: (favorites) {
         if (favorites.isEmpty) {
+          final searchQuery = ref.watch(searchQueryProvider);
+          if (searchQuery.isNotEmpty) {
+            return _buildEmptyState(
+              icon: Icons.search_off,
+              title: 'No favorites match your search',
+              subtitle: 'Try different keywords or clear the search',
+            );
+          }
           return _buildEmptyState(
             icon: Icons.favorite_border,
             title: 'No favorites yet',
             subtitle: 'Start adding services to your favorites',
           );
         }
-        
+
         return RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(favoriteServicesProvider);
@@ -284,7 +287,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen>
     required String subtitle,
   }) {
     final theme = Theme.of(context);
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -324,11 +327,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
               'Something went wrong',

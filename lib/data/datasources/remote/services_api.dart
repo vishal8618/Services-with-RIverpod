@@ -37,12 +37,23 @@ class ServicesApiImpl implements ServicesApi {
         },
       );
       
-      final List<dynamic> data = response.data?['data'] ?? _getMockServices();
+      final List<dynamic> data = response.data?['data'] ?? _getMockServices(
+        category: category,
+        searchQuery: searchQuery,
+        page: page,
+        limit: limit,
+      );
       return data.map((json) => ServiceModel.fromJson(json)).toList();
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError || 
           e.type == DioExceptionType.unknown) {
-        return _getMockServices().map((json) => ServiceModel.fromJson(json)).toList();
+        final mockData = _getMockServices(
+          category: category,
+          searchQuery: searchQuery,
+          page: page,
+          limit: limit,
+        );
+        return mockData.map((json) => ServiceModel.fromJson(json)).toList();
       }
       throw _handleError(e);
     }
@@ -78,11 +89,17 @@ class ServicesApiImpl implements ServicesApi {
     }
   }
   
-  List<Map<String, dynamic>> _getMockServices() {
-    return List.generate(50, (index) => {
+  List<Map<String, dynamic>> _getMockServices({
+    String? category,
+    String? searchQuery,
+    int page = 1,
+    int limit = 20,
+  }) {
+    // Generate all services first
+    var allServices = List.generate(100, (index) => {
       'id': 'service_${index + 1}',
-      'name': 'Premium Service ${index + 1}',
-      'description': 'Experience our top-tier ${_getServiceType(index)} service with exceptional quality and professional expertise. Our dedicated team ensures your complete satisfaction.',
+      'name': _getServiceName(index),
+      'description': _getServiceDescription(index),
       'category': _getCategory(index),
       'price': 49.99 + (index * 10),
       'imageUrl': 'https://picsum.photos/400/300?random=$index',
@@ -98,6 +115,42 @@ class ServicesApiImpl implements ServicesApi {
         'bookings': 50 + index * 2,
       },
     });
+
+    // Filter by category if provided
+    if (category != null && category.isNotEmpty) {
+      allServices = allServices.where((service) => 
+        service['category'] == category).toList();
+    }
+
+    // Filter by search query if provided
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final query = searchQuery.toLowerCase().trim();
+      final queryWords = query.split(' ').where((word) => word.isNotEmpty).toList();
+      
+      allServices = allServices.where((service) {
+        final name = (service['name'] as String).toLowerCase();
+        final description = (service['description'] as String).toLowerCase();
+        final category = (service['category'] as String).toLowerCase();
+        final tags = (service['tags'] as List<String>).map((tag) => tag.toLowerCase()).toList();
+        final searchText = '$name $description $category ${tags.join(' ')}';
+        
+        // Match if all query words are found in the combined text
+        return queryWords.every((word) => searchText.contains(word));
+      }).toList();
+    }
+
+    // Apply pagination
+    final startIndex = (page - 1) * limit;
+    final endIndex = startIndex + limit;
+    
+    if (startIndex >= allServices.length) {
+      return [];
+    }
+    
+    return allServices.sublist(
+      startIndex, 
+      endIndex > allServices.length ? allServices.length : endIndex,
+    );
   }
   
   String _getServiceType(int index) {
@@ -124,5 +177,38 @@ class ServicesApiImpl implements ServicesApi {
   String _getExpertiseLevel(int index) {
     final levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert', 'Master'];
     return levels[index % levels.length];
+  }
+  
+  String _getServiceName(int index) {
+    final serviceNames = [
+      'Web Development', 'Mobile App Design', 'Digital Marketing', 'SEO Optimization', 'Content Writing',
+      'Logo Design', 'Brand Strategy', 'Social Media Management', 'E-commerce Solutions', 'UI/UX Design',
+      'Data Analysis', 'Business Consulting', 'Photography', 'Video Editing', 'Graphic Design',
+      'WordPress Development', 'React Development', 'Flutter App Development', 'Node.js Backend', 'Python Automation',
+      'Machine Learning', 'Artificial Intelligence', 'Blockchain Development', 'Cybersecurity Audit', 'Cloud Migration',
+      'DevOps Consulting', 'Database Design', 'API Development', 'Payment Integration', 'Performance Optimization',
+      'Email Marketing', 'Influencer Marketing', 'Market Research', 'Copywriting', 'Translation Services',
+      'Voice Over', 'Animation', 'Illustration', 'Icon Design', 'Website Maintenance',
+      'Technical Writing', 'Product Management', 'Agile Coaching', 'Quality Assurance', 'Software Testing',
+      'Music Production', 'Podcast Editing', 'Audio Mastering', 'Sound Design', 'Legal Consultation',
+    ];
+    return serviceNames[index % serviceNames.length];
+  }
+  
+  String _getServiceDescription(int index) {
+    final serviceName = _getServiceName(index);
+    final descriptions = [
+      'Professional $serviceName service with expert-level quality and fast delivery.',
+      'High-quality $serviceName solutions tailored to your specific business needs.',
+      'Experienced $serviceName specialist providing comprehensive and reliable services.',
+      'Creative $serviceName with modern approaches and innovative techniques.',
+      'Budget-friendly $serviceName services without compromising on quality.',
+      'Enterprise-grade $serviceName solutions for businesses of all sizes.',
+      'Custom $serviceName services designed to exceed your expectations.',
+      'Award-winning $serviceName with proven track record and client satisfaction.',
+      'Fast turnaround $serviceName services with 24/7 support availability.',
+      'Premium $serviceName consultation with industry best practices.',
+    ];
+    return descriptions[index % descriptions.length];
   }
 }

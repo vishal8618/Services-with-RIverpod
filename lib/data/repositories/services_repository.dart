@@ -21,6 +21,8 @@ abstract class ServicesRepository {
   bool isFavorite(String serviceId);
   
   Stream<List<String>> watchFavoriteIds();
+  
+  Future<void> clearCache();
 }
 
 class ServicesRepositoryImpl implements ServicesRepository {
@@ -121,5 +123,10 @@ class ServicesRepositoryImpl implements ServicesRepository {
   @override
   Stream<List<String>> watchFavoriteIds() {
     return _databaseService.watchFavoriteIds();
+  }
+  
+  @override
+  Future<void> clearCache() async {
+    await _databaseService.clearCache();
   }
 }
